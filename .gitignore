@@ -1,0 +1,22 @@
+# Python virtual environments -- never commit these, they're huge and
+# machine-specific. Anyone cloning the repo recreates them with:
+#   python -m venv venv
+#   pip install -r requirements.txt
+venv/
+__pycache__/
+*.pyc
+
+# Node (for the dashboard, later phases)
+node_modules/
+
+# Environment secrets
+.env
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+node_modules/
+mosquitto/data/
+mosquitto/log
+.env
