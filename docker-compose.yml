@@ -4,10 +4,29 @@ services:
     container_name: safety-mqtt-broker
     ports:
       - "1883:1883"
+
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
     restart: unless-stopped
 
-  # fog, cloud, and db services get added here in later phases
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: safety-postgres
+    environment:
+      POSTGRES_DB: travel_safety
+      POSTGRES_USER: safety_admin
+      POSTGRES_PASSWORD: safety_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./cloud/schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
+      - ./cloud/seed_stations.sql:/docker-entrypoint-initdb.d/2_seed_stations.sql
+    restart: unless-stopped
+
+  # cloud API service gets added here once the FastAPI app is ready
+
+volumes:
+  postgres_data:
