@@ -36,6 +36,7 @@ DB_CONFIG = {
     "dbname": os.getenv("DB_NAME", "travel_safety"),
     "user": os.getenv("DB_USER", "safety_admin"),
     "password": os.getenv("DB_PASSWORD", "safety_dev_password"),
+    "sslmode": os.getenv("DB_SSLMODE","prefer"),
 }
 
 MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
