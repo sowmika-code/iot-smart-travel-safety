@@ -294,5 +294,5 @@ def demo_cancel():
 
 @app.on_event("startup")
 def startup():
-    listener_thread = threading.Thread(target=start_mqtt_listener, daemon=True)
-    listener_thread.start()
+    if os.getenv("ENABLE_MQTT", "true").lower() == "true":
+        threading.Thread(target=start_mqtt_listener, daemon=True).start()

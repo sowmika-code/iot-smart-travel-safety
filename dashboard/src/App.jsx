@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_URL= "http://127.0.0.1:8000";
 
 export default function App() {
   const [incidents, setIncidents] = useState([]);
@@ -75,6 +75,9 @@ export default function App() {
       <div style={{ width: 340, overflowY: "auto", padding: 12 }}>
         <div style={{ padding: 8, marginBottom: 12, background: "#f3f4f6", borderRadius: 6 }}>
           <b>Demo panel</b>
+          <div style={{ padding: 8, marginBottom: 12, background: "#fef3c7", borderRadius: 6, fontSize: 13 }}>
+          Demo only. All data is simulated. No real emergency services are contacted.
+        </div>
           <div style={{ display: "flex", gap: 6, margin: "8px 0" }}>
             <button onClick={() => demo("crash")}>Simulate crash</button>
             <button onClick={() => demo("sos")}>Press SOS</button>
