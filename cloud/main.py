@@ -221,6 +221,76 @@ def list_stations():
     finally:
         conn.close()
 
+@app.patch("/incidents/{incident_id}/resolve")
+def resolve_incident(incident_id: int):
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "UPDATE incidents SET status = 'resolved' WHERE id = %s RETURNING id, status",
+                (incident_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Incident not found")
+        conn.commit()
+        return row
+    finally:
+        conn.close()
+        
+import random
+import time
+from datetime import datetime, timezone
+
+DEMO_TRAVELER = "demo_traveler"
+DEMO_STATE = {"last_crash": 0.0, "timer": None}
+
+
+def demo_payload(confidence, reason):
+    return {
+        "traveler_id": DEMO_TRAVELER,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "gps": {
+            "lat": 17.44 + random.uniform(-0.02, 0.02),
+            "lon": 78.40 + random.uniform(-0.04, 0.04),
+        },
+        "confidence": confidence,
+        "reason": reason,
+    }
+
+
+@app.post("/demo/crash")
+def demo_crash():
+    DEMO_STATE["last_crash"] = time.time()
+    return {"message": "Crash signal recorded. Press SOS within 10 seconds."}
+
+
+@app.post("/demo/sos")
+def demo_sos():
+    if DEMO_STATE["timer"]:
+        return {"message": "SOS already pending. Press Cancel or wait."}
+    if time.time() - DEMO_STATE["last_crash"] < 10:
+        store_incident(demo_payload("high", "sos_with_crash_signal"))
+        return {"message": "High confidence: escalated immediately."}
+
+    def escalate():
+        DEMO_STATE["timer"] = None
+        store_incident(demo_payload("low", "sos_timeout_no_cancel"))
+
+    t = threading.Timer(15, escalate)
+    DEMO_STATE["timer"] = t
+    t.start()
+    return {"message": "Low confidence: escalating in 15s unless cancelled."}
+
+
+@app.post("/demo/cancel")
+def demo_cancel():
+    t = DEMO_STATE["timer"]
+    if t:
+        t.cancel()
+        DEMO_STATE["timer"] = None
+        return {"message": "SOS cancelled. Nothing escalated."}
+    return {"message": "Nothing pending to cancel."}
 
 @app.on_event("startup")
 def startup():
