@@ -4,7 +4,6 @@ services:
     container_name: safety-mqtt-broker
     ports:
       - "1883:1883"
-
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
@@ -26,7 +25,35 @@ services:
       - ./cloud/seed_stations.sql:/docker-entrypoint-initdb.d/2_seed_stations.sql
     restart: unless-stopped
 
-  # cloud API service gets added here once the FastAPI app is ready
+  api:
+    build: ./cloud
+    container_name: safety-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: travel_safety
+      DB_USER: safety_admin
+      DB_PASSWORD: safety_dev_password
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - mosquitto
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+      args:
+        VITE_API_URL: http://127.0.0.1:8000
+    container_name: safety-dashboard
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
   postgres_data:
