@@ -311,7 +311,7 @@ def demo_cancel(pos: Optional[Pos] = None):
     return {"message": "Nothing pending to cancel."}
 
 DEMO_TRAVELER = "demo_traveler"
-DEMO_STATE = {"last_crash": 0.0, "timer": None}
+DEMO_STATE = {"last_crash": 0.0, "timer": None,"deadline":None}
 
 '''
 def demo_payload(confidence, reason):
@@ -348,6 +348,7 @@ def demo_sos():
     t = threading.Timer(15, escalate)
     DEMO_STATE["timer"] = t
     t.start()
+    DEMO_STATE["deadline"]=time.time()+15
     return {"message": "Low confidence: escalating in 15s unless cancelled."}
 
 
@@ -359,6 +360,13 @@ def demo_cancel():
         DEMO_STATE["timer"] = None
         return {"message": "SOS cancelled. Nothing escalated."}
     return {"message": "Nothing pending to cancel."}
+
+@app.get("/demo/status")
+def demo_status():
+    d = DEMO_STATE.get("deadline")
+    if DEMO_STATE["timer"] and d:
+        return {"pending": True, "seconds_left": max(0, int(d - time.time()))}
+    return {"pending": False}
 
 @app.on_event("startup")
 def startup():

@@ -9,6 +9,15 @@ export default function App() {
   const [stations, setStations] = useState([]);
 
   const [demoMsg, setDemoMsg] = useState("");
+
+  const [pending, setPending] = useState({ pending: false });
+  useEffect(() => {
+    const t = setInterval(() => {
+      fetch(`${API}/demo/status`).then((r) => r.json()).then(setPending).catch(() => {});
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+
   const demo = (action) =>
     fetch(`${API}/demo/${action}`, { method: "POST" })
       .then((r) => r.json())
@@ -85,6 +94,11 @@ export default function App() {
           </div>
           <div style={{ fontSize: 13 }}>{demoMsg}</div>
         </div>
+        {pending.pending && (
+          <div style={{ padding: 8, marginBottom: 8, background: "#fee2e2", borderRadius: 6 }}>
+            <b>SOS pending</b>: traveler can still cancel. Escalating in {pending.seconds_left}s.
+          </div>
+        )}
         <h2>Incidents ({incidents.length})</h2>
         {incidents.map((i) => (
           <div key={i.id} style={{ borderBottom: "1px solid #ddd", padding: "8px 0" }}>
