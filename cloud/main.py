@@ -86,7 +86,20 @@ def store_incident(payload):
             nearest = None
             if lat is not None and lon is not None:
                 nearest = find_nearest_station(cur, lon, lat)
-
+            cur.execute(
+                """
+                SELECT id FROM incidents
+                WHERE traveler_id = %s
+                  AND status = 'open'
+                  AND created_at > now() - interval '10 seconds'
+                LIMIT 1
+                """,
+                (payload["traveler_id"],),
+            )
+            existing = cur.fetchone()
+            if existing:
+                print(f"[cloud] Duplicate for {payload['traveler_id']}, skipping.")
+                return
             cur.execute(
                 """
                 INSERT INTO incidents
