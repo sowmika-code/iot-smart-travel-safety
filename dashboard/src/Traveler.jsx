@@ -126,7 +126,7 @@ export default function Traveler() {
       <div style={{ marginTop: 12, fontSize: 13 }}>
         Want to test the crash check? <button onClick={crash}>Simulate crash</button> then press SOS.
       </div>
-      <div style={{ marginTop: 12 }}><a href="#/">Responder dashboard</a></div>
+      <div style={{ marginTop: 12 }}><a href="#/">← Home</a> · <a href="#/responder">Responder view</a></div>
     </div>
   );
 }

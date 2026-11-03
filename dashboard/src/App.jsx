@@ -84,6 +84,7 @@ export default function App() {
       <div style={{ width: 340, overflowY: "auto", padding: 12 }}>
         <div style={{ padding: 8, marginBottom: 12, background: "#f3f4f6", borderRadius: 6 }}>
           <b>Demo panel</b>
+          <div style={{ marginBottom: 8 }}><a href="#/">← Home</a> · <a href="#/traveler">Traveler view</a></div>
           <div style={{ padding: 8, marginBottom: 12, background: "#fef3c7", borderRadius: 6, fontSize: 13 }}>
           Demo only. All data is simulated. No real emergency services are contacted.
         </div>
