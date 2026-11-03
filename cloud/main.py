@@ -256,10 +256,64 @@ import random
 import time
 from datetime import datetime, timezone
 
+from typing import Optional
+from pydantic import BaseModel
+
+
+class Pos(BaseModel):
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+
+def demo_payload(confidence, reason, pos=None):
+    lat = pos.lat if pos and pos.lat is not None else 17.44 + random.uniform(-0.02, 0.02)
+    lon = pos.lon if pos and pos.lon is not None else 78.40 + random.uniform(-0.04, 0.04)
+    return {
+        "traveler_id": DEMO_TRAVELER,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "gps": {"lat": lat, "lon": lon},
+        "confidence": confidence,
+        "reason": reason,
+    }
+
+
+@app.post("/demo/crash")
+def demo_crash(pos: Optional[Pos] = None):
+    DEMO_STATE["last_crash"] = time.time()
+    return {"message": "Crash signal recorded. Press SOS within 10 seconds."}
+
+
+@app.post("/demo/sos")
+def demo_sos(pos: Optional[Pos] = None):
+    if DEMO_STATE["timer"]:
+        return {"message": "SOS already pending. Press Cancel or wait."}
+    if time.time() - DEMO_STATE["last_crash"] < 10:
+        store_incident(demo_payload("high", "sos_with_crash_signal", pos))
+        return {"message": "High confidence: escalated immediately."}
+
+    def escalate():
+        DEMO_STATE["timer"] = None
+        store_incident(demo_payload("low", "sos_timeout_no_cancel", pos))
+
+    t = threading.Timer(15, escalate)
+    DEMO_STATE["timer"] = t
+    t.start()
+    return {"message": "Low confidence: escalating in 15s unless cancelled."}
+
+
+@app.post("/demo/cancel")
+def demo_cancel(pos: Optional[Pos] = None):
+    t = DEMO_STATE["timer"]
+    if t:
+        t.cancel()
+        DEMO_STATE["timer"] = None
+        return {"message": "SOS cancelled. Nothing escalated."}
+    return {"message": "Nothing pending to cancel."}
+
 DEMO_TRAVELER = "demo_traveler"
 DEMO_STATE = {"last_crash": 0.0, "timer": None}
 
-
+'''
 def demo_payload(confidence, reason):
     return {
         "traveler_id": DEMO_TRAVELER,
@@ -309,4 +363,4 @@ def demo_cancel():
 @app.on_event("startup")
 def startup():
     if os.getenv("ENABLE_MQTT", "true").lower() == "true":
-        threading.Thread(target=start_mqtt_listener, daemon=True).start()
+        threading.Thread(target=start_mqtt_listener, daemon=True).start()'''
