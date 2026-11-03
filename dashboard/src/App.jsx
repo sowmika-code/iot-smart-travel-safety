@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 const API = import.meta.env.VITE_API_URL= "http://127.0.0.1:8000";
+
+function FlyToLatest({ incident }) {
+  const map = useMap();
+  useEffect(() => {
+    if (incident) map.setView([incident.lat, incident.lon], 14);
+  }, [incident?.id]);
+  return null;
+}
 
 export default function App() {
   const [incidents, setIncidents] = useState([]);
@@ -59,6 +67,7 @@ export default function App() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap"
           />
+          <FlyToLatest incident={incidents[0]} />
           {stations.map((s) => (
             <CircleMarker key={s.id} center={[s.lat, s.lon]} radius={8}
               pathOptions={{ color: "#1d4ed8" }}>
