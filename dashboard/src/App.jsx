@@ -41,7 +41,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
-  // Fetch police stations
   useEffect(() => {
     fetch(`${API}/police-stations`)
       .then((r) => {
@@ -52,7 +51,6 @@ export default function App() {
       .catch(() => setApiError("Could not load police stations."));
   }, []);
 
-  // Fetch incidents
   useEffect(() => {
     const loadIncidents = () => {
       fetch(`${API}/incidents`)
@@ -77,7 +75,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Resolve incident
   const resolve = async (id) => {
     try {
       const response = await fetch(`${API}/incidents/${id}/resolve`, {
@@ -101,17 +98,17 @@ export default function App() {
   const sortedIncidents = [...incidents].sort((a, b) =>
     new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0)
   );
+
   const openIncidents = incidents.filter(
     (incident) => String(incident.status || "open").toLowerCase() !== "resolved"
   );
+
   const resolvedIncidents = incidents.filter(
     (incident) => String(incident.status || "").toLowerCase() === "resolved"
   );
 
   return (
     <div className="dashboard">
-
-      {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">✦</div>
@@ -123,11 +120,9 @@ export default function App() {
 
         <div className="sidebar-section">
           <p className="sidebar-label">MAIN MENU</p>
-
           <a href="#/" className="nav-item active">
             <span>◈</span> Command Centre
           </a>
-
           <a href="#/traveler" className="nav-item">
             <span>♙</span> Traveler View
           </a>
@@ -141,7 +136,6 @@ export default function App() {
               <small>Simulated data only</small>
             </div>
           </div>
-
           <div className="sidebar-footer">
             IoT-Based Smart Travel Safety
             <br />
@@ -150,10 +144,7 @@ export default function App() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="main-content">
-
-        {/* TOP HEADER */}
         <header className="topbar">
           <div>
             <p className="eyebrow">OVERVIEW / MONITORING</p>
@@ -172,48 +163,20 @@ export default function App() {
           </div>
         </header>
 
-        {/* STATISTICS */}
         <section className="stats-grid">
-          <StatCard
-            label="Total Incidents"
-            value={incidents.length}
-            detail="All recorded incidents"
-            icon="◈"
-          />
-
-          <StatCard
-            label="Open Incidents"
-            value={openIncidents.length}
-            detail="Require attention"
-            icon="⚠"
-          />
-
-          <StatCard
-            label="Resolved"
-            value={resolvedIncidents.length}
-            detail="Marked as resolved"
-            icon="✓"
-          />
-
-          <StatCard
-            label="Police Stations"
-            value={stations.length}
-            detail="Available in simulation"
-            icon="⌖"
-          />
+          <StatCard label="Total Incidents" value={incidents.length} detail="All recorded incidents" icon="◈" />
+          <StatCard label="Open Incidents" value={openIncidents.length} detail="Require attention" icon="⚠" />
+          <StatCard label="Resolved" value={resolvedIncidents.length} detail="Marked as resolved" icon="✓" />
+          <StatCard label="Police Stations" value={stations.length} detail="Available in simulation" icon="⌖" />
         </section>
 
-        {/* MAP AND RIGHT PANEL */}
         <section className="workspace">
-
-          {/* MAP */}
           <div className="map-panel">
             <div className="panel-heading">
               <div>
                 <h2>Live Incident Map</h2>
                 <p>Geographical view of incidents and nearby stations</p>
               </div>
-
               <span className="map-tag">MAP VIEW</span>
             </div>
 
@@ -230,53 +193,63 @@ export default function App() {
 
                 <FlyToLatest incident={sortedIncidents[0]} />
 
-                {stations.filter((station) => Number.isFinite(Number(station.lat)) && Number.isFinite(Number(station.lon))).map((station) => (
-                  <CircleMarker
-                    key={station.id}
-                    center={[station.lat, station.lon]}
-                    radius={8}
-                    pathOptions={{
-                      color: "#38bdf8",
-                      fillColor: "#0284c7",
-                      fillOpacity: 0.9,
-                    }}
-                  >
-                    <Popup>{station.name}</Popup>
-                  </CircleMarker>
-                ))}
+                {stations
+                  .filter((station) =>
+                    Number.isFinite(Number(station.lat)) &&
+                    Number.isFinite(Number(station.lon))
+                  )
+                  .map((station) => (
+                    <CircleMarker
+                      key={station.id}
+                      center={[station.lat, station.lon]}
+                      radius={8}
+                      pathOptions={{
+                        color: "#38bdf8",
+                        fillColor: "#0284c7",
+                        fillOpacity: 0.9,
+                      }}
+                    >
+                      <Popup>{station.name}</Popup>
+                    </CircleMarker>
+                  ))}
 
-                {incidents.filter((incident) => Number.isFinite(Number(incident.lat)) && Number.isFinite(Number(incident.lon))).map((incident) => (
-                  <CircleMarker
-                    key={incident.id}
-                    center={[incident.lat, incident.lon]}
-                    radius={8}
-                    pathOptions={{
-                      color:
-                        incident.status === "resolved"
-                          ? "#94a3b8"
-                          : incident.confidence === "high"
-                          ? "#ef4444"
-                          : "#f59e0b",
-                      fillColor:
-                        incident.status === "resolved"
-                          ? "#94a3b8"
-                          : incident.confidence === "high"
-                          ? "#dc2626"
-                          : "#f59e0b",
-                      fillOpacity: 0.85,
-                    }}
-                  >
-                    <Popup>
-                      <strong>Incident #{incident.id}</strong>
-                      <br />
-                      Traveler: {incident.traveler_id}
-                      <br />
-                      Reason: {incident.reason}
-                      <br />
-                      Nearest station: {incident.nearest_station_name}
-                    </Popup>
-                  </CircleMarker>
-                ))}
+                {incidents
+                  .filter((incident) =>
+                    Number.isFinite(Number(incident.lat)) &&
+                    Number.isFinite(Number(incident.lon))
+                  )
+                  .map((incident) => (
+                    <CircleMarker
+                      key={incident.id}
+                      center={[incident.lat, incident.lon]}
+                      radius={8}
+                      pathOptions={{
+                        color:
+                          incident.status === "resolved"
+                            ? "#94a3b8"
+                            : incident.confidence === "high"
+                            ? "#ef4444"
+                            : "#f59e0b",
+                        fillColor:
+                          incident.status === "resolved"
+                            ? "#94a3b8"
+                            : incident.confidence === "high"
+                            ? "#dc2626"
+                            : "#f59e0b",
+                        fillOpacity: 0.85,
+                      }}
+                    >
+                      <Popup>
+                        <strong>Incident #{incident.id}</strong>
+                        <br />
+                        Traveler: {incident.traveler_id}
+                        <br />
+                        Reason: {incident.reason}
+                        <br />
+                        Nearest station: {incident.nearest_station_name}
+                      </Popup>
+                    </CircleMarker>
+                  ))}
               </MapContainer>
             </div>
 
@@ -288,24 +261,39 @@ export default function App() {
             </div>
           </div>
 
-          {/* RIGHT PANEL */}
           <div className="right-panel">
-
-            {/* SYSTEM STATUS */}
             <div className="panel demo-panel">
               <div className="panel-heading">
-                <div><h2>Monitoring Status</h2><p>Live platform overview</p></div>
+                <div>
+                  <h2>Monitoring Status</h2>
+                  <p>Live platform overview</p>
+                </div>
                 <span className="control-icon">✓</span>
               </div>
-              <div className="demo-warning">Responder workspace is for reviewing incoming traveler alerts and updating incident status.</div>
+
+              <div className="demo-warning">
+                Responder workspace is for reviewing incoming traveler alerts and updating incident status.
+              </div>
+
               <div className="system-status-list">
-                <div><span className="status-dot"></span><span>Incident feed</span><strong>{loading ? "Loading" : "Connected"}</strong></div>
-                <div><span className="status-dot"></span><span>Location map</span><strong>{stations.length + incidents.length} markers</strong></div>
-                <div><span className="status-dot"></span><span>Awaiting response</span><strong>{openIncidents.length}</strong></div>
+                <div>
+                  <span className="status-dot"></span>
+                  <span>Incident feed</span>
+                  <strong>{loading ? "Loading" : "Connected"}</strong>
+                </div>
+                <div>
+                  <span className="status-dot"></span>
+                  <span>Location map</span>
+                  <strong>{stations.length + incidents.length} markers</strong>
+                </div>
+                <div>
+                  <span className="status-dot"></span>
+                  <span>Awaiting response</span>
+                  <strong>{openIncidents.length}</strong>
+                </div>
               </div>
             </div>
 
-            {/* INCIDENT LIST */}
             <div className="panel incidents-panel">
               <div className="panel-heading">
                 <div>
@@ -331,32 +319,17 @@ export default function App() {
                     <div className="incident-item" key={incident.id}>
                       <div className="incident-item-top">
                         <strong>Incident #{incident.id}</strong>
-                        <span
-                          className={`incident-status ${
-                            incident.status === "resolved"
-                              ? "resolved"
-                              : "open"
-                          }`}
-                        >
+                        <span className={`incident-status ${incident.status === "resolved" ? "resolved" : "open"}`}>
                           {incident.status}
                         </span>
                       </div>
 
-                      <p className="traveler-id">
-                        Traveler: {incident.traveler_id}
-                      </p>
-
-                      <p className="incident-reason">
-                        {incident.reason}
-                      </p>
+                      <p className="traveler-id">Traveler: {incident.traveler_id}</p>
+                      <p className="incident-reason">{incident.reason}</p>
 
                       <div className="incident-meta">
-                        <span>
-                          {incident.confidence} confidence
-                        </span>
-                        <span>
-                          {incident.nearest_station_name}
-                        </span>
+                        <span>{incident.confidence} confidence</span>
+                        <span>{incident.nearest_station_name}</span>
                       </div>
 
                       {incident.status !== "resolved" && (
@@ -375,12 +348,10 @@ export default function App() {
           </div>
         </section>
 
-        {/* FOOTER */}
         <footer className="dashboard-footer">
           <span>SAFEROUTE TRAVEL SAFETY</span>
           <span>Powered by IoT • Edge Computing • Fog Computing</span>
         </footer>
-
       </main>
     </div>
   );
