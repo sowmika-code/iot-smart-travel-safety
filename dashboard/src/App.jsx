@@ -14,10 +14,10 @@ function FlyToLatest({ incident }) {
   const map = useMap();
 
   useEffect(() => {
-    if (incident) {
-      map.setView([incident.lat, incident.lon], 14);
-    }
-  }, [incident?.id, map]);
+    const lat = Number(incident?.lat);
+    const lon = Number(incident?.lon);
+    if (Number.isFinite(lat) && Number.isFinite(lon)) map.setView([lat, lon], 14);
+  }, [incident?.id, incident?.lat, incident?.lon, map]);
 
   return null;
 }
@@ -38,28 +38,8 @@ function StatCard({ label, value, detail, icon }) {
 export default function App() {
   const [incidents, setIncidents] = useState([]);
   const [stations, setStations] = useState([]);
-  const [demoMsg, setDemoMsg] = useState("");
-  const [pending, setPending] = useState({ pending: false });
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
-
-  // Fetch SOS pending status
-  useEffect(() => {
-    const loadPending = () => {
-      fetch(`${API}/demo/status`)
-        .then((r) => {
-          if (!r.ok) throw new Error("Status unavailable");
-          return r.json();
-        })
-        .then(setPending)
-        .catch(() => {});
-    };
-
-    loadPending();
-    const timer = setInterval(loadPending, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   // Fetch police stations
   useEffect(() => {
@@ -97,22 +77,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Demo actions
-  const demo = async (action) => {
-    try {
-      const response = await fetch(`${API}/demo/${action}`, {
-        method: "POST",
-      });
-
-      if (!response.ok) throw new Error("Demo action failed");
-
-      const data = await response.json();
-      setDemoMsg(data.message || "Action completed.");
-    } catch {
-      setDemoMsg("Unable to perform action. Check backend connection.");
-    }
-  };
-
   // Resolve incident
   const resolve = async (id) => {
     try {
@@ -129,17 +93,19 @@ export default function App() {
             : incident
         )
       );
-    } catch {
-      setDemoMsg("Unable to resolve incident.");
+    } catch (error) {
+      setApiError(error.message || "Unable to resolve incident. Please check the backend connection.");
     }
   };
 
-  const openIncidents = incidents.filter(
-    (incident) => incident.status !== "resolved"
+  const sortedIncidents = [...incidents].sort((a, b) =>
+    new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0)
   );
-
+  const openIncidents = incidents.filter(
+    (incident) => String(incident.status || "open").toLowerCase() !== "resolved"
+  );
   const resolvedIncidents = incidents.filter(
-    (incident) => incident.status === "resolved"
+    (incident) => String(incident.status || "").toLowerCase() === "resolved"
   );
 
   return (
@@ -150,7 +116,7 @@ export default function App() {
         <div className="brand">
           <div className="brand-icon">✦</div>
           <div>
-            <h2>TRAVEL<span>SAFE</span></h2>
+            <h2>SAFE<span>ROUTE</span></h2>
             <p>INTELLIGENT SAFETY SYSTEM</p>
           </div>
         </div>
@@ -262,9 +228,9 @@ export default function App() {
                   attribution="&copy; OpenStreetMap"
                 />
 
-                <FlyToLatest incident={incidents[0]} />
+                <FlyToLatest incident={sortedIncidents[0]} />
 
-                {stations.map((station) => (
+                {stations.filter((station) => Number.isFinite(Number(station.lat)) && Number.isFinite(Number(station.lon))).map((station) => (
                   <CircleMarker
                     key={station.id}
                     center={[station.lat, station.lon]}
@@ -279,7 +245,7 @@ export default function App() {
                   </CircleMarker>
                 ))}
 
-                {incidents.map((incident) => (
+                {incidents.filter((incident) => Number.isFinite(Number(incident.lat)) && Number.isFinite(Number(incident.lon))).map((incident) => (
                   <CircleMarker
                     key={incident.id}
                     center={[incident.lat, incident.lon]}
@@ -325,60 +291,18 @@ export default function App() {
           {/* RIGHT PANEL */}
           <div className="right-panel">
 
-            {/* DEMO CONTROLS */}
+            {/* SYSTEM STATUS */}
             <div className="panel demo-panel">
               <div className="panel-heading">
-                <div>
-                  <h2>Simulation Controls</h2>
-                  <p>Trigger test scenarios</p>
-                </div>
-                <span className="control-icon">⌘</span>
+                <div><h2>Monitoring Status</h2><p>Live platform overview</p></div>
+                <span className="control-icon">✓</span>
               </div>
-
-              <div className="demo-warning">
-                DEMO ONLY — All data is simulated. No real emergency
-                services are contacted.
+              <div className="demo-warning">Responder workspace is for reviewing incoming traveler alerts and updating incident status.</div>
+              <div className="system-status-list">
+                <div><span className="status-dot"></span><span>Incident feed</span><strong>{loading ? "Loading" : "Connected"}</strong></div>
+                <div><span className="status-dot"></span><span>Location map</span><strong>{stations.length + incidents.length} markers</strong></div>
+                <div><span className="status-dot"></span><span>Awaiting response</span><strong>{openIncidents.length}</strong></div>
               </div>
-
-              <button
-                className="action-button crash-button"
-                onClick={() => demo("crash")}
-              >
-                <span>⚡</span>
-                Simulate Crash
-              </button>
-
-              <button
-                className="action-button sos-button"
-                onClick={() => demo("sos")}
-              >
-                <span>✚</span>
-                Press SOS
-              </button>
-
-              <button
-                className="action-button cancel-button"
-                onClick={() => demo("cancel")}
-              >
-                <span>↶</span>
-                Cancel SOS
-              </button>
-
-              {demoMsg && (
-                <div className="demo-message">{demoMsg}</div>
-              )}
-
-              {pending.pending && (
-                <div className="pending-alert">
-                  <strong>⚠ SOS Pending</strong>
-                  <p>
-                    Traveler can still cancel.
-                  </p>
-                  <div className="countdown">
-                    Escalating in <strong>{pending.seconds_left}s</strong>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* INCIDENT LIST */}
@@ -403,7 +327,7 @@ export default function App() {
                 </div>
               ) : (
                 <div className="incident-list">
-                  {incidents.map((incident) => (
+                  {sortedIncidents.map((incident) => (
                     <div className="incident-item" key={incident.id}>
                       <div className="incident-item-top">
                         <strong>Incident #{incident.id}</strong>
@@ -435,7 +359,7 @@ export default function App() {
                         </span>
                       </div>
 
-                      {incident.status === "open" && (
+                      {incident.status !== "resolved" && (
                         <button
                           className="resolve-button"
                           onClick={() => resolve(incident.id)}
@@ -453,7 +377,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="dashboard-footer">
-          <span>SMART TRAVEL SAFETY SYSTEM</span>
+          <span>SAFEROUTE TRAVEL SAFETY</span>
           <span>Powered by IoT • Edge Computing • Fog Computing</span>
         </footer>
 
